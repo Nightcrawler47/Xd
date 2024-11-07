@@ -1,108 +1,53 @@
 const os = require('os');
 const process = require('process');
-const fs = require('fs');
-const FastSpeedtest = require('fast-speedtest-api');
-const Thread = require('../../database/models/thread');
-const User = require('../../database/models/user');
-const axios = require('axios');
-
-const speedtest = new FastSpeedtest({
-    token: 'YXNkZmFzZGxmbnNkYWZoYXNkZmhrYWxm', // Replace with your FastSpeedtest API token
-    verbose: false,
-    timeout: 10000,
-    https: true,
-    urlCount: 5,
-    bufferSize: 8,
-    unit: FastSpeedtest.UNITS.Mbps,
-});
+const { formatDuration } = require('date-fns'); 
 
 module.exports = {
     config: {
         name: "uptime",
-        aliases: ["botstats", "statistics", " stats"],
-        role: 1,
-        cooldowns: 5,
-        version: '1.0.0',
-        author: 'Samir Thakuri',
-        category: "admin",
-        description: "Display bot statistics.",
-        usage: "stats",
+        aliases:["upt","up"],
+        author: "dipto",
+        description: "Get system and bot uptime information",
+        commandCategory: "utility",
+        usage: "uptime",
+        usePrefix: true,
+        role: 0,
     },
-
-    onStart: async function ({ bot, chatId, msg }) {
+    onStart: async ({ message,usersData, threadsData }) => {
         try {
-            // Send initial message
-            const preMessage = await bot.sendMessage(chatId, 'Fetching bot statistics... Please wait.', { replyToMessage: msg.message_id });
+            const systemUptime = formatDuration({ hours: Math.floor(os.uptime() / 3600), minutes: Math.floor((os.uptime() % 3600) / 60), seconds: Math.floor(os.uptime() % 60) });
+            const processUptime = formatDuration({ hours: Math.floor(process.uptime() / 3600), minutes: Math.floor((process.uptime() % 3600) / 60), seconds: Math.floor(process.uptime() % 60) });
 
-            // Retrieve uptime and memory usage
-            const uptime = process.uptime();
-            const uptimeString = formatUptime(uptime);
-            const memoryUsage = process.memoryUsage();
-            const memoryUsageMB = (memoryUsage.rss / (1024 * 1024)).toFixed(2);
-            const jsFileCount = countJSFiles();
-            const diskStats = getDiskStats();
-            
-            // Retrieve internet speed
-            const internetSpeed = await getInternetSpeed();
+    
+            const systemInfo = {
+        os: os.type() + " " + os.release(),
+                cores: os.cpus().length,
+                architecture: os.arch(),
+                totalMemory: (os.totalmem() / (1024 ** 3)).toFixed(2) + " GB",
+                freeMemory: (os.freemem() / (1024 ** 3)).toFixed(2) + " GB",
+                ramUsage: ((os.totalmem() - os.freemem()) / (1024 ** 2)).toFixed(2) + " MB",
+            };
+            const totalUsers = await usersData.getAllUsers().then(users => users.length);
+            const totalThreads = await threadsData.getAllThreads().then(threads => threads.length);
 
-            // Retrieve user and thread counts
-            const userCount = await User.countDocuments();
-            const threadCount = await Thread.countDocuments();
+            const uptimeMessage = `
+╭──✦ [ Uptime Information ]
+├‣ 🕒 System Uptime: ${systemUptime}
+╰‣ ⏱ Process Uptime: ${processUptime}
 
-            // Final message with all statistics
-            const statsMessage = `
-📊 Bot Statistics 📊
-
-🕒 Uptime: ${uptimeString}
-💾 Memory Usage: ${memoryUsageMB} MB
-📂 Total Commands: ${jsFileCount}
-💽 Disk Total: ${diskStats.total} GB, Free: ${diskStats.free} GB
-🌐 Internet Speed: ${internetSpeed} Mbps
-👤 Total Users: ${userCount}
-🧵 Total Threads: ${threadCount}
-`;
-
-            await bot.editMessageText({ chatId: chatId, messageId: preMessage.message_id }, statsMessage, { replyToMessage: msg.message_id });
-
-        } catch (error) {
-            console.error('[ERROR]', error);
-            await bot.editMessageText({ chatId: chatId, messageId: preMessage.message_id }, 'An error occurred while fetching the stats.', { replyToMessage: msg.message_id });
+╭──✦ [ System Information ]
+├‣ 📡 OS: ${systemInfo.os}
+├‣ 🛡 Cores: ${systemInfo.cores}
+├‣ 🔍 Architecture: ${systemInfo.architecture}
+├‣ 🖥 Node Version: ${process.version}
+├‣ 📈 Total Memory: ${systemInfo.totalMemory}
+├‣ 📉 Free Memory: ${systemInfo.freeMemory}
+├‣ 📊 RAM Usage: ${systemInfo.ramUsage}
+├‣ 👥 Total Users: ${totalUsers} members
+╰‣📂 Total Threads: ${totalThreads} Groups`;
+            await message.reply(uptimeMessage);
+        } catch (err) {
+            await message.reply(`❌ | Error occurred: ${err.message}`);
         }
     }
 };
-
-// Function to format uptime
-function formatUptime(uptime) {
-    const days = Math.floor(uptime / (3600 * 24));
-    const hours = Math.floor((uptime % (3600 * 24)) / 3600);
-    const minutes = Math.floor((uptime % 3600) / 60);
-    const seconds = Math.floor(uptime % 60);
-
-    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-}
-
-// Function to count JavaScript files in the command directory
-function countJSFiles() {
-    const cmdDir = __dirname;
-    const files = fs.readdirSync(cmdDir);
-    const jsFiles = files.filter(file => file.endsWith('.js'));
-    return jsFiles.length;
-}
-
-// Function to get disk statistics
-function getDiskStats() {
-    const total = (os.totalmem() / (1024 * 1024 * 1024)).toFixed(2); // Total disk space
-    const free = (os.freemem() / (1024 * 1024 * 1024)).toFixed(2); // Free disk space
-    return { total, free };
-}
-
-// Function to get internet speed
-async function getInternetSpeed() {
-    try {
-        const speed = await speedtest.getSpeed();
-        return speed.toFixed(2); // Round to 2 decimal places
-    } catch (error) {
-        console.error('[ERROR] Internet speed test failed:', error);
-        return 'N/A';
-    }
-}
