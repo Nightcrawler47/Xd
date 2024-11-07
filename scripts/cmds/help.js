@@ -1,141 +1,108 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = {
-    config: {
-        name: 'help',
-        aliases: [],
-        category: 'utility',
-        role: 0,
-        cooldowns: 5,
-        version: '1.0.0',
-        author: 'Samir Thakuri',
-        description: 'Get a list of all available commands or detailed information about a specific command',
-        usage: 'help [command|page]'
-    },
+module.exports.config = {
+    name: "help",
+    version: "1.0",
+    author: "Dipto",
+    role: 0,
+    usePrefix: true,
+    description: "List all commands",
+    commandCategory: "system",
+    guide: "{p}help",
+    coolDowns: 5,
+    premium: false
+};
 
-    onStart: async function({ msg, bot, args, config, threadModel }) {
-        const chatId = msg.chat.id.toString();
-
-        // Find thread from database
-        let thread = await threadModel.findOne({ chatId });
-        if (!thread) {
-            return bot.sendMessage(chatId, 'Thread not found in the database.', { replyToMessage: msg.message_id });
-        }
-
-        const sorthelp = thread.sorthelp || false; // Default to false if not set
-        const commandsDir = path.resolve(__dirname, '..', 'commands');
-        const commandFiles = fs.readdirSync(commandsDir).filter(file => file.endsWith('.js') && file !== 'test.js');
-
-        // Dynamically require all command files
-        const commands = commandFiles.map(file => require(path.join(commandsDir, file)));
-
-        if (!commands || !commands.length) {
-            console.error('Commands array is empty or undefined.');
-            return bot.sendMessage(chatId, 'There are no available commands at the moment.', { replyToMessage: msg.message_id });
-        }
-
-        // Handle command details
-        if (args[0]) {
-            if (!isNaN(args[0])) {
-                // Handle pagination if sorthelp is `name`
-                if (sorthelp === false) {
-                    const page = parseInt(args[0], 10);
-                    if (page < 1 || page > Math.ceil(commands.length / 15)) {
-                        return bot.sendMessage(chatId, 'Page not found. Please use a valid page number.', { replyToMessage: msg.message_id });
-                    }
-
-                    const start = (page - 1) * 15;
-                    const end = Math.min(start + 15, commands.length);
-                    const commandList = commands.slice(start, end);
-
-                    let helpMessage = `Help - Page ${page}/${Math.ceil(commands.length / 15)}\n`;
-                    commandList.forEach((cmd, index) => {
-                        helpMessage += `━━━━━━━━━━━━━\n[${start + index + 1}]. ${cmd.config.name} - ${cmd.config.description}\n`;
-                    });
-                    helpMessage += `━━━━━━━━━━━━━\nPage [ ${page}/${Math.ceil(commands.length / 15)} ]\n`;
-                    helpMessage += `Currently, the bot has ${commands.length} commands that can be used\n`;
-                    helpMessage += `» Type /help <page> to view the command list\n`;
-                    helpMessage += `» Type /help <command> to view the details of that command\n`;
-                    helpMessage += `━━━━━━━━━━━━━\n${config.copyrightMark}`;
-
-                    return bot.sendMessage(chatId, helpMessage, { replyToMessage: msg.message_id });
-                }
-            } else {
-                // Handle command detail
-                const commandName = args[0].toLowerCase();
-                const command = commands.find(cmd => cmd.config.name.toLowerCase() === commandName || (cmd.config.aliases && cmd.config.aliases.includes(commandName)));
-
-                if (command) {
-                    const { name, description, aliases = [], category, version, role, cooldowns, author, usage } = command.config;
-                    const roleText = role === 0 ? 'All users' : role === 1 ? 'Group admin' : 'Bot admin';
-                    return bot.sendMessage(chatId, `
-━━━━━━━━━━━━━━━━━━━━━━
-Name: ${name}
-━━━━━━━━━━━━━━━━━━━━━━
-» Description: ${description || 'No description available.'}
-» Other names: ${aliases.join(', ') || 'None'}
-» Category: ${category}
-» Version: ${version || '1.0.0'}
-» Permission: ${roleText}
-» Time per command: ${cooldowns} seconds
-» Author: ${author || 'Samir Thakuri'}
-━━━━━━━━━━  ❖  ━━━━━━━━━━
-» Usage guide:
-${config.prefix}${usage}
-━━━━━━━━━━  ❖  ━━━━━━━━━━
-» Notes:
-• The content inside <XXXXX> can be changed
-• The content inside [a|b|c] is a or b or c
-                    `, { replyToMessage: msg.message_id });
-                } else {
-                    return bot.sendMessage(chatId, `Command not found. Use ${config.prefix}help to see available commands.`, { replyToMessage: msg.message_id });
-                }
-            }
-        } else {
-            // Handle help menu
-            if (sorthelp === true) {
-                // Categorized list
-                let helpMessage = `Hello, ${msg.from.first_name}!\nHere's My Command List\n\n`;
-
-                // Group commands by category
-                const commandsByCategory = {};
-                commands.forEach(cmd => {
-                    const { name, category } = cmd.config;
-                    if (!commandsByCategory[category]) {
-                        commandsByCategory[category] = [];
-                    }
-                    commandsByCategory[category].push(name);
-                });
-
-                // Format command list for each category
-                Object.entries(commandsByCategory).forEach(([category, cmds]) => {
-                    helpMessage += `╭──────❨ ${category} ❩\n`;
-                    cmds.forEach(cmd => {
-                        helpMessage += `├ ${cmd}\n`;
-                    });
-                    helpMessage += `╰──────────────●\n`;
-                });
-
-                helpMessage += `Total Commands: ${commands.length}\n`;
-                helpMessage += `${config.copyrightMark}`;
-
-                return bot.sendMessage(chatId, helpMessage, { replyToMessage: msg.message_id });
-            } else {
-                // Default help menu with pagination
-                const commandList = commands.slice(0, 15); // Show first 15 commands
-                let helpMessage = `Hello, ${msg.from.first_name}!\nHere's My Command List\n\n━━━━━━━━━━━━━━━━━━━━━━`;
-                commandList.forEach((cmd, index) => {
-                    helpMessage += `\n[${index + 1}]. ${cmd.config.name} - ${cmd.config.description|| ''}\n`;
-                });
-                helpMessage += `\n━━━━━━━━━━━━━━━━━━━━━━\nPage [ 1/${Math.ceil(commands.length / 15)} ]\n`;
-                helpMessage += `Currently, the bot has ${commands.length} commands that can be used\n`;
-                helpMessage += `» Type /help <page> to view the command list\n`;
-                helpMessage += `» Type /help <command> to view the details of that command\n`;
-                helpMessage += `━━━━━━━━━━━━━━━━━━━━━━\n${config.copyrightMark}`;
-
-                return bot.sendMessage(chatId, helpMessage, { replyToMessage: msg.message_id });
-            }
+module.exports.run = async ({ event, args, message, threadsData }) => {
+    const commandFiles = fs.readdirSync(path.join(__dirname, '..', 'cmds')).filter(file => file.endsWith('.js'));
+    const config = require('../../config.json');
+    const thread = await threadsData.getThread(event.chat.id);
+    const prefix = thread?.prefix || '!';
+    let categories = {};
+    let totalCommands = 0;
+    for (const file of commandFiles) {
+        const command = require(path.join(__dirname, '..', 'cmds', file));
+        if (command.config) {
+            const category = command.config.commandCategory || command.config.category || 'OTHER';
+            if (!categories[category]) categories[category] = [];
+            categories[category].push(command.config);
+            totalCommands++;
         }
     }
+    if (args[0]) {
+        if (args[0] === '-s' && args[1]) {
+            const searchLetter = args[1].toLowerCase();
+            const matchingCommands = Object.values(categories).flat().filter(cmd => cmd.name.startsWith(searchLetter));
+            if (matchingCommands.length === 0) {
+                return message.reply(`No commands found starting with '${searchLetter}'.`);
+            }
+
+            let searchMessage = `✨ [ Commands Starting with '${searchLetter.toUpperCase()}' ] ✨\n\n`;
+            matchingCommands.forEach(cmd => (searchMessage += `✧ ${cmd.name}\n`));
+            return message.reply(searchMessage);
+        }
+
+        const commandName = args[0].toLowerCase();
+        const command = Object.values(categories).flat().find(cmd => cmd.name === commandName || cmd.aliases?.includes(commandName));
+
+        if (!command) {
+            return message.reply('Command not found.');
+        }
+
+        let guide = command?.guide || command?.usages || 'No usage available';
+        guide = guide.replace(/{pn}|{pm}|{p}|{prefix}|{name}/g, prefix + command?.name);
+
+        if (args[1] === '-u') {
+            const usageMessage = `📝 Usage for ${command.name}: ${guide}`;
+            return message.reply(usageMessage);
+        }
+
+        if (args[1] === '-a') {
+            const aliasesMessage = `🪶 [ Aliases for ${command.name} ]: ${command.aliases ? command.aliases.join(', ') : 'None'}`;
+            return message.reply(aliasesMessage);
+        }
+
+        let commandInfo = `
+╭──✦ [ Command: ${command.name.toUpperCase()} ]
+├‣ 📜 Name: ${command.name}
+├‣ 👤 Credits: ${command?.credits || command?.author || 'Unknown'}
+├‣ 🔑 Permission: ${command.role === 0 ? 'Everyone' : 'Admin'}
+├‣ 🪶 Aliases: ${command.aliases ? command.aliases.join(', ') : 'None'}
+├‣ 📜 Description: ${command.description || 'No description'}
+├‣ 📚 Guide: ${guide}
+├‣ 🚩 Prefix Required: ${command.prefix || command.usePrefix ? 'Yes' : 'No'}
+├‣ ⚜️ Premium: ${command.premium ? 'Yes' : 'No'}
+╰───────────────◊`;
+
+        return message.reply(commandInfo);
+    }
+  // const categoriesPerPage = 10;
+  const page = parseInt(args[0], 10) || 1;
+    const categoryKeys = Object.keys(categories);
+    const totalPages = 1; //Math.ceil(categoryKeys.length / categoriesPerPage);
+
+   // if (isNaN(page) || page < 1 || page > totalPages) {
+       // return message.reply(`Please provide a valid page number (1-${totalPages}).`);
+  //  }
+
+  //  const startIndex = (page - 1) * categoriesPerPage;
+   // const endIndex = startIndex + categoriesPerPage;
+ //   const paginatedCategories = categoryKeys.slice(startIndex, endIndex);
+
+   // if (paginatedCategories.length === 0) {
+    //    return message.reply(`Page ${page} is empty. Please enter a valid page number.`);
+   // }
+
+    let helpMessage = `✨ [ Guide For Beginners - Page ${page} ] ✨\n\n`;
+
+    for (const category of categoryKeys) {
+        helpMessage += `╭──── [ ${category.toUpperCase()} ]\n`;
+        helpMessage += `│ ✧${categories[category].map(cmd => cmd.name).join(' ✧ ')}\n`;
+        helpMessage += `╰───────────────◊\n`;
+    }
+
+    helpMessage += `\n╭─『 ${config.botName.toUpperCase()} BOT 』\n╰‣ Total commands: ${totalCommands}\n╰‣ Page ${page} of ${totalPages}\n╰‣ A personal Telegram bot ✨\n╰‣ ADMIN: ${config.adminName}\n`;
+
+    return message.reply(helpMessage);
 };
