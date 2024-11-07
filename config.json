@@ -1,23 +1,20 @@
+```
 {
-  "owner": "Dip To",
+  "owner": "Shantuu",
   "fb_ID":"ADD_YOUR_FACEBOOK_ID",
-  "adminName": "Dip To",
-  "botName": "Your Baby",
-  "token": "ADD_YOUR_BOT_TOKEN_HERE",
-"mongodbURI":"mongodb+srv://userg4185:zWfR3c1ez5zpAUj0@cluster0.mfbe2.mongodb.net/botbee?retryWrites=true&w=majority&appName=Cluster0",
+  "adminName": "Sidw_xx",
+  "botName": "CaT Araa",
+  "token": "7617715895:AAGrTTmgM68IckmnUt2tkuuOYOwrXWRIyZg",
+"mongodbURI":"mongodb+srv://catbot:khusivabi@cluster0.quk1rri.mongodb.net/botbeee?retryWrites=true&w=majority&appName=Cluster0",
   "notes":"ADD_YOUR_MONGO_DB_URI for fast response. and if you don't know how to collect mongo uri then see this For database. MongooDB uri => https://drive.google.com/file/d/10AxcIiFQuI9S2gMBwV_i4U8UogMJX8pD/view?usp=drivesdk",
-  "prefix": "!",
+  "prefix": "/",
   "api": "https://www.noobs-api.000.pe/dipto",
   "database": {
     "mongo": true,
     "json": false
   },
-  "adminBot": [
-    6242891290
-  ],
-  "botOperator": [
-    6242891290
-  ],
+  "adminBot": [6658590630],
+  "botOperator": [6658590630],
   "inbox": true,
   "white_list_group": {
     "enable": false,
@@ -46,3 +43,5 @@
   "unloadCommand": {},
   "unloadEvent": {}
 }
+
+```
