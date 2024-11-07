@@ -1,8 +1,7 @@
-```
 {
   "owner": "Shantuu",
   "fb_ID":"ADD_YOUR_FACEBOOK_ID",
-  "adminName": "Sidw_xx",
+  "adminName": "Shantuuu",
   "botName": "CaT Araa",
   "token": "7617715895:AAGrTTmgM68IckmnUt2tkuuOYOwrXWRIyZg",
 "mongodbURI":"mongodb+srv://catbot:khusivabi@cluster0.quk1rri.mongodb.net/botbeee?retryWrites=true&w=majority&appName=Cluster0",
@@ -43,5 +42,3 @@
   "unloadCommand": {},
   "unloadEvent": {}
 }
-
-```
