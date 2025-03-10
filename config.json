@@ -1,9 +1,9 @@
 {
-  "owner": "Shantuu",
+  "owner": "Uwu",
   "fb_ID":"ADD_YOUR_FACEBOOK_ID",
-  "adminName": "Shantuuu",
-  "botName": "CaT Araa",
-  "token": "7617715895:AAGrTTmgM68IckmnUt2tkuuOYOwrXWRIyZg",
+  "adminName": "uwu",
+  "botName": "Nigga ai",
+  "token": "",
 "mongodbURI":"mongodb+srv://catbot:khusivabi@cluster0.quk1rri.mongodb.net/botbeee?retryWrites=true&w=majority&appName=Cluster0",
   "notes":"ADD_YOUR_MONGO_DB_URI for fast response. and if you don't know how to collect mongo uri then see this For database. MongooDB uri => https://drive.google.com/file/d/10AxcIiFQuI9S2gMBwV_i4U8UogMJX8pD/view?usp=drivesdk",
   "prefix": "/",
@@ -12,8 +12,8 @@
     "mongo": true,
     "json": false
   },
-  "adminBot": [6658590630],
-  "botOperator": [6658590630],
+  "adminBot": [5654944622],
+  "botOperator": [5654944622],
   "inbox": true,
   "white_list_group": {
     "enable": false,
@@ -24,7 +24,7 @@
   "white_list_ID": {
     "enable": false,
     "IDS": [
-      111222333
+      5654944622
     ]
   },
   "ignore_list_ID": {
